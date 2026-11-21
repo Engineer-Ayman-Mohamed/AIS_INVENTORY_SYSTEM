@@ -1,0 +1,25 @@
+# ===================================================================
+# Docker Compose for AIS Inventory Management & Valuation System
+# Supports:
+# 1. Neon Cloud PostgreSQL (Set DATABASE_URL in .env)
+# 2. Local containerized PostgreSQL fallback
+# 3. Built-in zero-config SQLite mode
+# ===================================================================
+
+services:
+  ais-app:
+    build: .
+    container_name: ais_inventory_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./ais_inventory.db}
+      - DEFAULT_OPERATOR=${DEFAULT_OPERATOR:-Ayman Mohamed (Team Leader)}
+    volumes:
+      - ./ais_inventory.db:/app/ais_inventory.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
