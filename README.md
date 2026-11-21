@@ -18,10 +18,15 @@ The system provides real-time perpetual inventory tracking, multi-method valuati
 ## 2. Core Functional Modules
 
 - **Item Master Management:** Central catalog for Stock Keeping Units (SKUs), maintaining reorder thresholds, units of measure, live stock quantities, and moving average unit costs. Prohibits deletion of records with historical ledger activity.
+  
 - **Goods In (Purchases):** Records inventory acquisitions, updates dynamic Weighted Average Cost (WAC) upon receipt, and instantiates distinct historical Cost Layers for perpetual allocation.
+  
 - **Goods Out (Sales):** Records inventory dispatches, calculates perpetual Cost of Goods Sold (COGS) across FIFO, WAC, and LIFO methods, depresses active cost layers, and strictly enforces the **No Negative Inventory** rule.
+  
 - **Valuation and Financial Reporting Engine:** Generates real-time financial statements with dynamic toggles between cost-flow assumptions (FIFO, WAC, LIFO) and tracking systems (Perpetual vs. Periodic), complete with IAS 2.1.9 regulatory compliance disclosures.
+  
 - **Internal Controls and Managerial Oversight:** Implements automated reorder alerts, Pareto ABC inventory classification (80/15/5 rule), physical count reconciliation with an automated **2.0% tolerance threshold**, and an immutable chronological audit trail.
+  
 - **Executive Dashboard:** Presents operational Key Performance Indicators (KPIs), financial margins, inventory turnover, Days Sales in Inventory (DSI), and comparative visual analytics.
 
 ---
