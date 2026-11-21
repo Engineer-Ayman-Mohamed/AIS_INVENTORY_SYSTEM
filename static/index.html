@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIS Inventory Management &amp; Valuation System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Ambient Soft-Blur Orbs (animated via GSAP) -->
+  <div class="ambient-canvas" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Mobile Toggle & Scrim -->
+  <button class="mobile-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">
+    <i data-lucide="menu"></i>
+  </button>
+  <div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+  <div class="app-shell">
+
+    <!-- ============ FLOATING GLASS SIDEBAR ============ -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <i data-lucide="layers"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <h2>AIS Inventory</h2>
+          <span>Valuation System</span>
+        </div>
+      </div>
+
+      <div class="nav-section-label">Workspace</div>
+      <nav class="sidebar-nav">
+        <button class="nav-link active" data-tab="dashboard">
+          <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
+          <span class="nav-text">Dashboard</span>
+        </button>
+        <button class="nav-link" data-tab="items">
+          <span class="nav-icon"><i data-lucide="package"></i></span>
+          <span class="nav-text">Item Master</span>
+        </button>
+        <button class="nav-link" data-tab="purchases">
+          <span class="nav-icon"><i data-lucide="arrow-down-to-line"></i></span>
+          <span class="nav-text">Goods In</span>
+        </button>
+        <button class="nav-link" data-tab="sales">
+          <span class="nav-icon"><i data-lucide="arrow-up-from-line"></i></span>
+          <span class="nav-text">Goods Out</span>
+        </button>
+        <button class="nav-link" data-tab="valuation">
+          <span class="nav-icon"><i data-lucide="scale"></i></span>
+          <span class="nav-text">Valuation Engine</span>
+        </button>
+        <button class="nav-link" data-tab="controls">
+          <span class="nav-icon"><i data-lucide="shield-check"></i></span>
+          <span class="nav-text">Analysis &amp; Controls</span>
+          <span class="nav-badge" id="tab-alert-badge" style="display:none;">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-profile">
+          <div class="sidebar-avatar">
+            <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
+          </div>
+          <div class="sidebar-profile-info">
+            <div class="profile-name" id="operator-name-header">System Operator</div>
+            <div class="profile-role">Inventory Controller</div>
+          </div>
+        </div>
+        <div class="sidebar-status">
+          <span class="status-dot"></span>
+          <span id="db-badge-text">Connecting...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <div class="main-area">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section id="dashboard" class="tab-pane active">
+        <div class="page-header">
+          <div>
+            <h2>Executive Dashboard</h2>
+            <p>Real-time KPIs, inventory valuation &amp; financial analytics</p>
+          </div>
+          <div class="header-pill">
+            <i data-lucide="sparkles"></i>
+            <span>Perpetual AIS Ledger</span>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi kpi-b">
+            <div class="kpi-ic"><i data-lucide="wallet"></i></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Closing Inventory Value</div>
+              <div class="kpi-val" id="kpi-valuation">$0.00</div>
+              <div class="kpi-hint">Weighted Average Cost (WAC)</div>
+            </div>
+          </div>
+          <div class="kpi kpi-g">
+            <div class="kpi-ic"><i data-lucide="boxes"></i></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Active SKUs / Stock</div>
+              <div class="kpi-val" id="kpi-skus">0</div>
+              <div class="kpi-hint" id="kpi-units">0 Units on Hand</div>
+            </div>
+          </div>
+          <div class="kpi kpi-a">
+            <div class="kpi-ic"><i data-lucide="alert-triangle"></i></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Reorder Alerts</div>
+              <div class="kpi-val" id="kpi-low-stock" style="color:var(--amber);">0</div>
+              <div class="kpi-hint">Items requiring replenishment</div>
+            </div>
+          </div>
+          <div class="kpi kpi-v">
+            <div class="kpi-ic"><i data-lucide="refresh-cw"></i></div>
+            <div class="kpi-body">
+              <div class="kpi-label">Inventory Turnover</div>
+              <div class="kpi-val" id="kpi-turnover">0.0x</div>
+              <div class="kpi-hint" id="kpi-dsi">0 Days in Inventory</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <span class="quick-actions-label"><i data-lucide="zap"></i> Quick Actions</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-goods-in')"><i data-lucide="arrow-down-to-line"></i> Record Purchase</button>
+          <button class="btn btn-success btn-sm" onclick="openModal('modal-goods-out')"><i data-lucide="arrow-up-from-line"></i> Record Sale</button>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('modal-create-item')"><i data-lucide="plus"></i> Add New SKU</button>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('modal-reconcile')"><i data-lucide="clipboard-check"></i> Run Audit Count</button>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-box">
+            <div class="g-card-title"><i data-lucide="scale"></i> Cost-Flow Comparison</div>
+            <div class="g-card-sub">Valuation impact: FIFO vs WAC vs LIFO</div>
+            <div class="chart-area"><canvas id="valuationMethodChart"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="g-card-title"><i data-lucide="pie-chart"></i> Value by Category</div>
+            <div class="g-card-sub">Stock capital distribution by product family</div>
+            <div class="chart-area"><canvas id="categoryChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="g-card">
+          <div class="g-card-title"><i data-lucide="clock"></i> Recent Transactions</div>
+          <div class="g-card-sub">Immutable real-time movement stream</div>
+          <div id="recent-transactions-list" style="margin-top:0.85rem;"></div>
+        </div>
+      </section>
+
+      <!-- ===== ITEM MASTER ===== -->
+      <section id="items" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h2>Item Master Catalogue</h2>
+            <p>SKU catalog, reorder levels &amp; real-time stock balances</p>
+          </div>
+        </div>
+        <div class="g-card">
+          <div class="g-card-header">
+            <div class="g-card-title"><i data-lucide="package"></i> Active Inventory Items</div>
+            <div class="action-row">
+              <input type="text" id="item-search-input" class="g-input" placeholder="Search SKU or name...">
+              <select id="item-category-filter" class="g-select"><option value="ALL">All Categories</option></select>
+              <button class="btn btn-primary" onclick="openModal('modal-create-item')"><i data-lucide="plus"></i> Add New SKU</button>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>SKU</th><th>Name</th><th>Category</th><th>UOM</th><th>Reorder Lvl</th><th>Price</th><th>Stock</th><th>WAC Cost</th><th>Valuation</th><th>Status</th><th>Actions</th>
+          </tr></thead><tbody id="items-table-body"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== GOODS IN ===== -->
+      <section id="purchases" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h2>Goods In (Purchases)</h2>
+            <p>Stock arrivals, cost layer generation &amp; moving average recalculation</p>
+          </div>
+        </div>
+        <div class="g-card">
+          <div class="g-card-header">
+            <div class="g-card-title"><i data-lucide="arrow-down-to-line"></i> Purchase Receipts</div>
+            <button class="btn btn-primary" onclick="openModal('modal-goods-in')"><i data-lucide="plus"></i> Record Purchase</button>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>Date / Time</th><th>SKU</th><th>Product</th><th>Supplier</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Reference</th>
+          </tr></thead><tbody id="purchases-table-body"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== GOODS OUT ===== -->
+      <section id="sales" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h2>Goods Out (Sales)</h2>
+            <p>Sales dispatch, perpetual COGS calculation &amp; negative balance blocking</p>
+          </div>
+        </div>
+        <div class="g-card">
+          <div class="g-card-header">
+            <div class="g-card-title"><i data-lucide="arrow-up-from-line"></i> Sales Dispatches</div>
+            <button class="btn btn-success" onclick="openModal('modal-goods-out')"><i data-lucide="plus"></i> Record Sale</button>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>Date / Time</th><th>SKU</th><th>Product</th><th>Customer</th><th>Qty</th><th>Price</th><th>Revenue</th><th>COGS</th><th>Margin</th>
+          </tr></thead><tbody id="sales-table-body"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== VALUATION ENGINE ===== -->
+      <section id="valuation" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h2>Valuation Engine</h2>
+            <p>Interactive cost-flow assumption &amp; inventory system toggles</p>
+          </div>
+        </div>
+        <div class="g-card">
+          <div class="val-toolbar">
+            <div class="val-group">
+              <span class="val-group-label">Cost-Flow:</span>
+              <div class="toggle-group">
+                <button class="toggle-btn active" data-val-method="FIFO">FIFO</button>
+                <button class="toggle-btn" data-val-method="WAC">WAC</button>
+                <button class="toggle-btn" data-val-method="LIFO">LIFO</button>
+              </div>
+            </div>
+            <div class="val-group">
+              <span class="val-group-label">System:</span>
+              <div class="toggle-group">
+                <button class="toggle-btn active" data-val-system="PERPETUAL">Perpetual</button>
+                <button class="toggle-btn" data-val-system="PERIODIC">Periodic</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="lifo-academic-notice" class="notice" style="display:none;">
+            <div class="notice-icon"><i data-lucide="alert-circle"></i></div>
+            <div id="lifo-notice-text">IAS 2.1.9 prohibits LIFO for standard financial reporting.</div>
+          </div>
+
+          <div class="kpi-row">
+            <div class="kpi kpi-b"><div class="kpi-ic"><i data-lucide="package"></i></div><div class="kpi-body"><div class="kpi-label">Goods Available</div><div class="kpi-val" id="val-goods-avail">$0.00</div><div class="kpi-hint">Total Acquisition Cost</div></div></div>
+            <div class="kpi kpi-g"><div class="kpi-ic"><i data-lucide="tag"></i></div><div class="kpi-body"><div class="kpi-label">Ending Inventory</div><div class="kpi-val" id="val-ending-stock">$0.00</div><div class="kpi-hint">Closing Balance on Hand</div></div></div>
+            <div class="kpi kpi-a"><div class="kpi-ic"><i data-lucide="trending-down"></i></div><div class="kpi-body"><div class="kpi-label">Cost of Goods Sold</div><div class="kpi-val" id="val-cogs">$0.00</div><div class="kpi-hint">COGS via selected method</div></div></div>
+            <div class="kpi kpi-i"><div class="kpi-ic"><i data-lucide="dollar-sign"></i></div><div class="kpi-body"><div class="kpi-label">Total Revenue</div><div class="kpi-val" id="val-revenue">$0.00</div><div class="kpi-hint">Historical Sales Realized</div></div></div>
+            <div class="kpi kpi-v"><div class="kpi-ic"><i data-lucide="trending-up"></i></div><div class="kpi-body"><div class="kpi-label">Gross Margin</div><div class="kpi-val" id="val-gross-margin">$0.00</div><div class="kpi-hint"><span id="val-gross-margin-pct">0%</span> &bull; <span id="val-turnover-days">0 d</span> DSI</div></div></div>
+          </div>
+
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>SKU</th><th>Name</th><th>Stock</th><th>Goods Avail.</th><th>Ending Val</th><th>COGS</th><th>Revenue</th><th>Margin</th><th>DSI</th>
+          </tr></thead><tbody id="valuation-table-body"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== ANALYSIS & CONTROLS ===== -->
+      <section id="controls" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h2>Analysis &amp; Internal Controls</h2>
+            <p>Reorder alerts, ABC classification, reconciliation engine &amp; audit trail</p>
+          </div>
+        </div>
+
+        <div class="g-card">
+          <div class="g-card-header"><div><div class="g-card-title"><i data-lucide="alert-triangle"></i> Reorder Alerts</div><div class="g-card-sub">Items at or below minimum replenishment threshold</div></div></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>SKU</th><th>Name</th><th>Stock</th><th>Threshold</th><th>Status</th><th>Action</th></tr></thead><tbody id="reorder-table-body"></tbody></table></div>
+        </div>
+
+        <div class="g-card">
+          <div class="g-card-header"><div><div class="g-card-title"><i data-lucide="bar-chart-3"></i> ABC Classification</div><div class="g-card-sub">Pareto analysis — Class A: 75%, Class B: 15%, Class C: 10%</div></div></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Class</th><th>SKU</th><th>Name</th><th>Units Sold</th><th>Usage Value</th><th>Share</th><th>Cumulative</th><th>Control Policy</th></tr></thead><tbody id="abc-table-body"></tbody></table></div>
+        </div>
+
+        <div class="g-card">
+          <div class="g-card-header">
+            <div><div class="g-card-title"><i data-lucide="clipboard-check"></i> Reconciliation Engine</div><div class="g-card-sub">Physical counts vs book stock — flags variances &gt; 2% tolerance</div></div>
+            <button class="btn btn-primary" onclick="openModal('modal-reconcile')"><i data-lucide="search"></i> Perform Audit</button>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>SKU</th><th>Book</th><th>Physical</th><th>Variance</th><th>Threshold</th><th>Adjusted</th><th>Notes</th></tr></thead><tbody id="reconciliation-table-body"></tbody></table></div>
+        </div>
+
+        <div class="g-card">
+          <div class="g-card-header"><div><div class="g-card-title"><i data-lucide="scroll-text"></i> Audit Trail</div><div class="g-card-sub">Immutable chronological ledger with operator stamps</div></div></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Timestamp</th><th>Action</th><th>Entity</th><th>Operator</th><th>Details</th></tr></thead><tbody id="audit-table-body"></tbody></table></div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <strong>AIS Mini-Project</strong> &bull; Inventory Management &amp; Valuation System<br>
+        Single-User Accounting Information System &bull; Neon PostgreSQL &bull; Docker Ready
+      </footer>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+
+  <!-- Create Item -->
+  <div id="modal-create-item" class="modal-bg">
+    <div class="modal-box">
+      <div class="modal-head"><h3><i data-lucide="plus-circle"></i> Add New Item</h3><button class="modal-x" onclick="closeModal('modal-create-item')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <form id="create-item-form">
+        <div class="modal-body">
+          <div class="fg2"><div class="fg"><label>SKU Code *</label><input type="text" name="sku" class="fc" placeholder="e.g. SKU-KEY-01" required></div><div class="fg"><label>Product Name *</label><input type="text" name="name" class="fc" placeholder="e.g. Wireless Mouse" required></div></div>
+          <div class="fg2"><div class="fg"><label>Category</label><input type="text" name="category" class="fc" value="General"></div><div class="fg"><label>Unit of Measure</label><input type="text" name="unit_of_measure" class="fc" value="Unit"></div></div>
+          <div class="fg2"><div class="fg"><label>Reorder Level</label><input type="number" step="any" min="0" name="reorder_level" class="fc" value="10" required></div><div class="fg"><label>Selling Price ($)</label><input type="number" step="0.01" min="0" name="selling_price" class="fc" value="0.00" required></div></div>
+          <div class="opening-stock-panel">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:0.55rem;">Optional Opening Stock</div>
+            <div class="fg2"><div class="fg" style="margin-bottom:0;"><label>Opening Qty</label><input type="number" step="any" min="0" name="initial_stock" class="fc" value="0"></div><div class="fg" style="margin-bottom:0;"><label>Unit Cost ($)</label><input type="number" step="0.01" min="0" name="initial_cost" class="fc" value="0.00"></div></div>
+          </div>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-item')">Cancel</button><button type="submit" class="btn btn-primary">Save Item</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Goods In -->
+  <div id="modal-goods-in" class="modal-bg">
+    <div class="modal-box">
+      <div class="modal-head"><h3><i data-lucide="arrow-down-to-line"></i> Record Purchase</h3><button class="modal-x" onclick="closeModal('modal-goods-in')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <form id="goods-in-form">
+        <div class="modal-body">
+          <div class="fg"><label>Select SKU *</label><select name="item_id" id="goods-in-item-select" class="fc" required></select></div>
+          <div class="fg2"><div class="fg"><label>Quantity *</label><input type="number" step="any" min="0.01" name="quantity" class="fc" placeholder="Qty > 0" required></div><div class="fg"><label>Unit Cost ($) *</label><input type="number" step="0.01" min="0.01" name="unit_cost" class="fc" placeholder="Cost > 0" required></div></div>
+          <div class="fg2"><div class="fg"><label>Supplier *</label><input type="text" name="supplier" class="fc" placeholder="e.g. Apex Electronics" required></div><div class="fg"><label>PO Reference</label><input type="text" name="reference" class="fc" value="PO-2026-"></div></div>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-goods-in')">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Goods Out -->
+  <div id="modal-goods-out" class="modal-bg">
+    <div class="modal-box">
+      <div class="modal-head"><h3><i data-lucide="arrow-up-from-line"></i> Record Sale</h3><button class="modal-x" onclick="closeModal('modal-goods-out')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <form id="goods-out-form">
+        <div class="modal-body">
+          <div class="fg"><label>Select SKU *</label><select name="item_id" id="goods-out-item-select" class="fc" required></select></div>
+          <div id="goods-out-stock-preview" style="display:none; background:var(--blue-soft); border:1px solid rgba(79,109,245,0.18); color:#2b47b8; padding:0.65rem 0.9rem; border-radius:10px; font-size:0.82rem; margin-bottom:1rem;"></div>
+          <div class="fg2"><div class="fg"><label>Quantity *</label><input type="number" step="any" min="0.01" name="quantity" class="fc" placeholder="Qty > 0" required></div><div class="fg"><label>Price ($) *</label><input type="number" step="0.01" min="0" name="selling_price" id="goods-out-price" class="fc" required></div></div>
+          <div class="fg2"><div class="fg"><label>Customer *</label><input type="text" name="customer" class="fc" placeholder="e.g. City Retailer" required></div><div class="fg"><label>Invoice Ref</label><input type="text" name="reference" class="fc" value="INV-2026-"></div></div>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-goods-out')">Cancel</button><button type="submit" class="btn btn-success">Execute Sale</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reconciliation -->
+  <div id="modal-reconcile" class="modal-bg">
+    <div class="modal-box">
+      <div class="modal-head"><h3><i data-lucide="clipboard-check"></i> Physical Count Audit</h3><button class="modal-x" onclick="closeModal('modal-reconcile')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <form id="reconcile-form">
+        <div class="modal-body">
+          <div class="fg"><label>Select Item *</label><select name="item_id" id="reconcile-item-select" class="fc" required></select></div>
+          <div class="fg"><label>Physical Count *</label><input type="number" step="any" min="0" name="physical_count" id="reconcile-count" class="fc" placeholder="Verified count" required></div>
+          <div id="reconcile-preview-box" style="display:none; padding:0.75rem 1rem; border-radius:10px; border:1px solid; margin-bottom:1rem; font-size:0.82rem;"></div>
+          <div class="fg"><label>Audit Notes</label><input type="text" name="notes" class="fc" placeholder="e.g. Physical count verified in Bin C-12"></div>
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-top:0.6rem;">
+            <input type="checkbox" id="adjust_book_stock" name="adjust_book_stock" style="width:16px; height:16px; accent-color:var(--blue);">
+            <label for="adjust_book_stock" style="font-size:0.82rem; font-weight:600; cursor:pointer; color:var(--text);">Synchronize book stock to match this count</label>
+          </div>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-reconcile')">Cancel</button><button type="submit" class="btn btn-primary">Submit Audit</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cost Layers -->
+  <div id="modal-cost-layers" class="modal-bg">
+    <div class="modal-box" style="max-width:660px;">
+      <div class="modal-head"><h3 id="cost-layer-modal-title"><i data-lucide="layers"></i> Cost Layers</h3><button class="modal-x" onclick="closeModal('modal-cost-layers')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="modal-body">
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Supplier</th><th>Original</th><th>Remaining</th><th>Unit Cost</th><th>Ref</th></tr></thead><tbody id="cost-layer-table-body"></tbody></table></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="closeModal('modal-cost-layers')">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div id="modal-confirm-delete" class="modal-bg">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-head"><h3><i data-lucide="trash-2"></i> Confirm Deletion</h3><button class="modal-x" onclick="closeModal('modal-confirm-delete')" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="modal-body">
+        <p id="confirm-delete-message" style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;"></p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-confirm-delete')">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete SKU</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-box"></div>
+
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
